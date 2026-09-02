@@ -1,0 +1,36 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd ~
+            if [ -d "healthapp-backend" ]; then
+              cd healthapp-backend && git pull origin main
+            else
+              git clone https://github.com/aneeq885/healthapp-backend.git
+              cd healthapp-backend
+            fi
+            docker stop healthapp-backend || true
+            docker rm healthapp-backend || true
+            docker build -t healthapp-backend .
+            docker run -d \
+              --name healthapp-backend \
+              --network healthapp-net \
+              -p 8000:8000 \
+              --restart always \
+              healthapp-backend
