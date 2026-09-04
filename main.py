@@ -1,8 +1,8 @@
+import os
+import time
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import motor.motor_asyncio
-import os
-import time
 
 app = FastAPI(title="Health App Monitor API")
 
@@ -22,10 +22,9 @@ START_TIME = time.time()
 
 @app.get("/health")
 async def get_system_health():
-    # Ping MongoDB to test database connection speed
     db_status = "disconnected"
     latency_ms = None
-    
+
     try:
         start = time.time()
         await client.admin.command('ping')
@@ -39,11 +38,6 @@ async def get_system_health():
     return {
         "status": "healthy",
         "uptime_seconds": uptime_seconds,
-        "services": {
-            "api": "online",
-            "database": {
-                "status": db_status,
-                "latency_ms": latency_ms
-            }
-        }
+        "database": db_status,
+        "latency_ms": latency_ms
     }
